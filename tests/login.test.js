@@ -1,0 +1,43 @@
+import http, { post } from 'k6/http'
+import { sleep, check } from 'k6'
+import { pegarBaseURL } from '../utils/variaveis.js';
+const postLogin = JSON.parse(open('../fixtures/postLogin.json'))
+
+export const options = {
+    //iterations: 20,
+    //vus: 4,
+    //duration: '30s',
+    stages: [
+        {duratio: '5s', target: 10 },
+        {duratio: '20s', target: 10 },
+        {duratio: '5s', target: 0 }
+    ],
+    //interations: 1,
+    thresholds: {
+        http_req_duration: ['p(90)<1000', 'max<1000'],
+        http_req_failed: ['rate<0.01']
+    }
+}
+
+export default function () {
+    const url = pegarBaseURL() + '/login';
+
+    postLogin.username = "junior.lima"
+    console.log(postLogin)
+    const payload = JSON.stringify(postLogin);
+
+    const params = {
+        headers: {
+        'Content-Type': 'application/json',
+        },
+    };
+
+    const res = http.post(url, payload, params);
+
+    check(res, {
+        'Validar que o Status é 200': (r) => r.status === 200,
+        'Validar que o Token é string': (r) => typeof(r.json().token) == 'string'
+    });
+
+    sleep(1);
+}
